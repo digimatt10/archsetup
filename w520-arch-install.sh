@@ -46,8 +46,8 @@ pacstrap -i /mnt base base-devel
 
 #Download the chroot script to be executed in the base System
 echo 'Downloading the chroot scripts'
-wget https://raw.githubusercontent.com/digimatt10/archsetup/master/w520-arch-install-chroot.sh -P /mnt/tmp
-chmod +x /mnt/tmp/w520-arch-install-chroot.sh
+wget https://raw.githubusercontent.com/digimatt10/archsetup/master/w520-arch-install-chroot.sh -P /mnt/root
+chmod +x /mnt/root/w520-arch-install-chroot.sh
 
 #Generate the fstab
 echo 'Generating the fstab'
@@ -55,7 +55,7 @@ genfstab -U -p /mnt >> /mnt/etc/fstab
 
 #Chroot to configure the base system
 echo 'chrooting into the base system'
-arch-chroot /mnt/tmp/w520-arch-install-chroot.sh
+arch-chroot /mnt /root/w520-arch-install-chroot.sh
 
 #Unmount and reboot
 echo 'Unmounting and rebooting'
