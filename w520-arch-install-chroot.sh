@@ -1,57 +1,5 @@
 #!/bin/bash
 
-#Erase the Disk
-#echo 'Erasing /dev/sda'
-#shred --verbose --random-source=/dev/urandom --iterations=1 /dev/sda
-
-#Partition the Disk
-echo 'Partitioning the Disk sda1-boot sda2-root'
-(
-echo o # Create a new empty DOS partition table
-echo n # Add a new partition
-echo p # Primary partition
-echo 1 # Partition number
-echo   # First sector (Accept default: 1)
-echo +100M # 100 MB boot parttion
-echo n # Add a new partition
-echo p # Primary partition
-echo 2 # Partition number
-echo   # First sector (Accept default: 1)
-echo   # Last sector (Accept default: End of Disk)
-echo a # make a partition bootable
-echo 1 # bootable partition is partition 1 -- /dev/sda1
-echo p # print the in-memory partition table
-echo w # Write changes
-echo q # and we're done
-) | sudo fdisk /dev/sda
-
-#Create cryptographic device mapper device in LUKS encryption mode
-echo 'Setting up Full Disk Encryption'
-cryptsetup --verbose --cipher aes-xts-plain64 --key-size 512 --hash sha512 --iter-time 5000 --use-random luksFormat /dev/sda2
-
-#Unlock the partition (cryptroot will be the device mapper name)
-cryptsetup open --type luks /dev/sda2 cryptroot
-
-#Create and mount the file systems
-echo 'Creating and mounting the file system'
-mkfs.ext4 /dev/sda1
-mkfs.ext4 /dev/mapper/cryptroot
-mount -t ext4 /dev/mapper/cryptroot /mnt
-mkdir -p /mnt/boot
-mount -t ext4 /dev/sda1 /mnt/boot
-
-#Install the base and base-devel systems
-echo 'Installing the base system'
-pacstrap -i /mnt base base-devel
-
-#Generate the fstab
-echo 'Generating the fstab'
-genfstab -U -p /mnt >> /mnt/etc/fstab
-
-#Chroot to configure the base system
-echo 'chrooting into the base system'
-arch-chroot /mnt
-
 #Uncomment the en_US locale
 echo 'setting the language and locale'
 sed -i 's/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/g' /etc/locale.gen
@@ -107,9 +55,3 @@ grub-mkconfig --output /boot/grub/grub.cfg
 
 #Exit from chroot, unmount the partitions, close the device and reboot (remove the installation media)
 exit
-umount -R /mnt/boot
-umount -R /mnt
-cryptsetup close cryptroot
-systemctl reboot
-
-
